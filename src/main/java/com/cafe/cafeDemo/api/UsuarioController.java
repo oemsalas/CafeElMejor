@@ -19,38 +19,38 @@ import com.cafe.cafeDemo.model.Usuario;
 import com.cafe.cafeDemo.repository.UsuarioRepository;
 
 
-@CrossOrigin//(origins = "http://localhost:8080",allowedHeaders = {"Authorization", "Origin"},allowCredentials="true",exposedHeaders = {"Access-Control-Allow-Origin","Access-Control-Allow-Credentials"})
+@CrossOrigin(origins = "http://localhost:8080",allowedHeaders = {"Authorization", "Origin"},allowCredentials="true",exposedHeaders = {"Access-Control-Allow-Origin","Access-Control-Allow-Credentials"})
 @RestController
-@RequestMapping("/api/usuario")
+@RequestMapping("/api/usuarios")
 public class UsuarioController {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
     
-    @GetMapping(value="/listar")
-    public List<Usuario> getAllProductos() {
+    @GetMapping
+    public List<Usuario> getUsuarios() {
         return usuarioRepository.findAll();
     }
     
-    @PostMapping(value="/obtenerUsuario")
-    public Usuario getUsuarioByEmailAndPassword(@RequestBody Usuario usuario) {
+    @PostMapping(value="/login")
+    public Usuario login(@RequestBody Usuario usuario) {
         return usuarioRepository.getUsuarioByPassword(usuario.getUsuario(), usuario.getPassword());
     }
     
     @PostMapping
-    public Usuario createProducto(@RequestBody Usuario usuario) {
-        return usuarioRepository.save(usuario);
+    public Usuario addUsuario(@RequestBody Usuario nuevoUsuario) {
+        return usuarioRepository.save(nuevoUsuario);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> getProductoById(@PathVariable Long id) {
+    public ResponseEntity<Usuario> getUsuarioById(@PathVariable Long id) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id " + id));
         return ResponseEntity.ok(usuario);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> updateProducto(@PathVariable Long id, @RequestBody Usuario usuarioDetalles) {
+    public ResponseEntity<Usuario> updateUsuario(@PathVariable Long id, @RequestBody Usuario usuarioDetalles) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id " + id));
 

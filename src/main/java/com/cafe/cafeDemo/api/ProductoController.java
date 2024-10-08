@@ -3,6 +3,7 @@ package com.cafe.cafeDemo.api;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,7 +28,7 @@ public class ProductoController {
     @Autowired
     private ProductosRepository productoRepository;
     
-    @GetMapping(value="/listar")
+    @GetMapping(value="/listar", produces=MediaType.APPLICATION_JSON_VALUE)
     public List<Producto> getAllProductos() {
         return productoRepository.findAll();
     }
