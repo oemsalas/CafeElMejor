@@ -19,7 +19,7 @@ import com.cafe.cafeDemo.model.Usuario;
 import com.cafe.cafeDemo.repository.UsuarioRepository;
 
 
-@CrossOrigin(origins = "http://localhost:8080",allowedHeaders = {"Authorization", "Origin"},allowCredentials="true",exposedHeaders = {"Access-Control-Allow-Origin","Access-Control-Allow-Credentials"})
+//@CrossOrigin(origins = "http://localhost:3000",allowedHeaders = {"Authorization", "Origin"},allowCredentials="true",exposedHeaders = {"Access-Control-Allow-Origin","Access-Control-Allow-Credentials"})
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
