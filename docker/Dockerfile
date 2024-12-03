@@ -18,7 +18,7 @@ COPY pom.xml .
 RUN mvn dependency:go-offline
 
 COPY src src
-RUN mvn package -Dmaven.test.skip=true
+RUN mvn package -Dmaven.test.skip=true -X
 # compute the created jar name and put it in a known location to copy to the next layer.
 # If the user changes pom.xml to have a different version, or artifactId, this will find the jar
 RUN grep version target/maven-archiver/pom.properties | cut -d '=' -f2 >.env-version
