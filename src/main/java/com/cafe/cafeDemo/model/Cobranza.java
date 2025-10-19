@@ -7,9 +7,17 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "cobranza")
+@Table
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Cobranza {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,29 +27,4 @@ public class Cobranza {
 	private String metodoDePago;
 	private int monto;
 	
-	
-	public int getIdCobranza() {
-		return idCobranza;
-	}
-	public void setIdCobranza(int idCobranza) {
-		this.idCobranza = idCobranza;
-	}
-	public Date getFechaCobranza() {
-		return fechaCobranza;
-	}
-	public void setFechaCobranza(Date fechaCobranza) {
-		this.fechaCobranza = fechaCobranza;
-	}
-	public String getMetodoDePago() {
-		return metodoDePago;
-	}
-	public void setMetodoDePago(String metodoDePago) {
-		this.metodoDePago = metodoDePago;
-	}
-	public int getMonto() {
-		return monto;
-	}
-	public void setMonto(int monto) {
-		this.monto = monto;
-	}
 }
