@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Café Demo — Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:        #1a1208;
+  --bg2:       #221808;
+  --surface:   #2a1f0e;
+  --surface2:  #33270f;
+  --border:    #ffffff0d;
+  --border2:   #ffffff18;
+  --accent:    #c8862a;
+  --accent2:   #e4a84a;
+  --cream:     #f5e6c8;
+  --cream2:    #e8d5a8;
+  --text:      #f0e2c8;
+  --muted:     #8a7355;
+  --muted2:    #b09060;
+  --green:     #6dbf8a;
+  --red:       #e07070;
+  --blue:      #7aabcf;
+  --font-head: 'Playfair Display', serif;
+  --font-body: 'DM Sans', sans-serif;
+  --radius:    10px;
+  --tr:        180ms cubic-bezier(.4,0,.2,1);
+}
+html{font-size:15px}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh}
+
+/* ── LOGIN ── */
+#loginScreen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 60% 40%, #3d2810 0%, #1a1208 70%);
+  position:relative;overflow:hidden;
+}
+#loginScreen::before{
+  content:'☕';font-size:18rem;position:absolute;right:-2rem;bottom:-4rem;
+  opacity:.04;line-height:1;pointer-events:none;
+}
+.login-card{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:18px;padding:44px 40px;width:100%;max-width:380px;
+  box-shadow:0 32px 80px #00000060;
+}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-logo h1{font-family:var(--font-head);font-size:2rem;color:var(--accent2);letter-spacing:.01em}
+.login-logo p{font-size:.78rem;color:var(--muted2);margin-top:4px}
+.login-field{margin-bottom:16px}
+.login-label{display:block;font-size:.72rem;color:var(--muted2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+.login-input{
+  width:100%;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:8px;padding:10px 14px;color:var(--text);
+  font-family:var(--font-body);font-size:.88rem;outline:none;
+  transition:border-color var(--tr);
+}
+.login-input:focus{border-color:var(--accent)}
+.login-input::placeholder{color:var(--muted)}
+.login-btn{
+  width:100%;margin-top:8px;padding:12px;border:none;border-radius:8px;
+  background:var(--accent);color:#fff;font-family:var(--font-body);
+  font-size:.88rem;font-weight:600;cursor:pointer;transition:all var(--tr);
+}
+.login-btn:hover{background:var(--accent2);transform:translateY(-1px)}
+.login-error{font-size:.75rem;color:var(--red);margin-top:10px;text-align:center;min-height:18px}
+
+/* ── APP SHELL ── */
+#appShell{display:none;min-height:100vh;flex-direction:column}
+#appShell.show{display:flex}
+
+.topbar{
+  height:56px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;position:sticky;top:0;z-index:100;
+}
+.topbar-logo{font-family:var(--font-head);font-size:1.2rem;color:var(--accent2);letter-spacing:.01em}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.topbar-user{font-size:.78rem;color:var(--muted2)}
+.topbar-user span{color:var(--cream);font-weight:600}
+.logout-btn{
+  background:none;border:1px solid var(--border2);border-radius:6px;
+  color:var(--muted2);font-family:var(--font-body);font-size:.72rem;
+  padding:5px 12px;cursor:pointer;transition:all var(--tr);
+}
+.logout-btn:hover{color:var(--red);border-color:var(--red)}
+
+.layout{display:flex;flex:1}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:210px;background:var(--bg2);border-right:1px solid var(--border);
+  padding:20px 0;position:sticky;top:56px;height:calc(100vh - 56px);
+  overflow-y:auto;flex-shrink:0;
+}
+.nav-section{font-size:.62rem;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.1em;padding:14px 20px 6px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 20px;
+  cursor:pointer;color:var(--muted2);font-size:.82rem;font-weight:400;
+  border-left:2px solid transparent;transition:all var(--tr);user-select:none;
+}
+.nav-item:hover{color:var(--text);background:var(--surface)}
+.nav-item.active{color:var(--accent2);border-left-color:var(--accent);background:#c8862a12}
+.nav-icon{font-size:.95rem;width:18px;text-align:center}
+
+/* ── MAIN ── */
+.main{flex:1;padding:28px 32px;min-width:0}
+.view{display:none;animation:fadeUp .2s ease}
+.view.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.page-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;
+}
+.page-title{font-family:var(--font-head);font-size:1.6rem;color:var(--cream);letter-spacing:-.01em}
+.page-sub{font-size:.78rem;color:var(--muted2);margin-top:2px}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;position:relative;overflow:hidden;transition:border-color var(--tr);
+}
+.stat-card::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--c, var(--accent));
+}
+.stat-card:hover{border-color:var(--border2)}
+.stat-lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.stat-val{font-family:var(--font-head);font-size:1.9rem;color:var(--c,var(--accent2));line-height:1}
+.stat-hint{font-size:.7rem;color:var(--muted);margin-top:5px}
+
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
+  border-radius:7px;font-family:var(--font-body);font-size:.78rem;
+  font-weight:500;cursor:pointer;border:none;transition:all var(--tr);white-space:nowrap;
+}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border2)}
+.btn-ghost:hover{color:var(--text);border-color:var(--muted)}
+.btn-danger{background:transparent;color:var(--red);border:1px solid #e0707030}
+.btn-danger:hover{background:#e0707015}
+.btn-sm{padding:5px 10px;font-size:.72rem}
+
+/* ── SEARCH/FILTER ── */
+.toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.inp{
+  background:var(--surface);border:1px solid var(--border2);border-radius:7px;
+  padding:8px 12px;color:var(--text);font-family:var(--font-body);font-size:.78rem;
+  outline:none;transition:border-color var(--tr);
+}
+.inp:focus{border-color:var(--accent)}
+.inp::placeholder{color:var(--muted)}
+.inp-search{min-width:200px}
+
+/* ── TABLE ── */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead{background:var(--surface2);border-bottom:1px solid var(--border)}
+th{padding:10px 14px;text-align:left;font-size:.67rem;font-weight:600;
+   text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+td{padding:11px 14px;font-size:.8rem;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.td-actions{display:flex;gap:6px}
+
+/* ── BADGES ── */
+.badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:.67rem;font-weight:600}
+.badge-amber{background:#c8862a22;color:var(--accent2)}
+.badge-green{background:#6dbf8a22;color:var(--green)}
+.badge-red{background:#e0707022;color:var(--red)}
+.badge-blue{background:#7aabcf22;color:var(--blue)}
+
+/* ── MODAL ── */
+.overlay{
+  position:fixed;inset:0;background:#00000085;backdrop-filter:blur(4px);
+  z-index:300;display:none;align-items:center;justify-content:center;
+}
+.overlay.open{display:flex}
+.modal{
+  background:var(--surface);border:1px solid var(--border2);border-radius:14px;
+  padding:28px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;
+  animation:slideUp .2s cubic-bezier(.4,0,.2,1);
+}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-title{font-family:var(--font-head);font-size:1.1rem;color:var(--cream)}
+.modal-close{background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:4px;transition:color var(--tr)}
+.modal-close:hover{color:var(--text)}
+.form-group{margin-bottom:14px}
+.form-lbl{display:block;font-size:.7rem;color:var(--muted2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
+.form-inp{
+  width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:7px;
+  padding:9px 12px;color:var(--text);font-family:var(--font-body);font-size:.82rem;outline:none;
+  transition:border-color var(--tr);
+}
+.form-inp:focus{border-color:var(--accent)}
+.form-inp::placeholder{color:var(--muted)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-err{font-size:.68rem;color:var(--red);margin-top:3px}
+.modal-ft{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* ── CONFIRM ── */
+.confirm-msg{font-size:.82rem;color:var(--muted2);line-height:1.6}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{
+  background:var(--surface2);border:1px solid var(--border2);border-radius:9px;
+  padding:11px 15px;font-size:.78rem;display:flex;align-items:center;gap:10px;
+  min-width:240px;animation:slideIn .2s ease;border-left:3px solid var(--accent);
+}
+.toast.ok{border-left-color:var(--green)}
+.toast.err{border-left-color:var(--red)}
+@keyframes slideIn{from{transform:translateX(16px);opacity:0}to{transform:none;opacity:1}}
+
+/* ── EMPTY / LOADING ── */
+.empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty-ico{font-size:2.2rem;margin-bottom:10px}
+.empty-state p{font-size:.8rem}
+.spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-cell{text-align:center;padding:36px!important}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <h1>☕ Café Demo</h1>
+      <p>Panel de administración</p>
+    </div>
+    <div class="login-field">
+      <label class="login-label">Usuario</label>
+      <input class="login-input" id="loginUser" placeholder="Ingresá tu usuario" />
+    </div>
+    <div class="login-field">
+      <label class="login-label">Contraseña</label>
+      <input class="login-input" id="loginPass" type="password" placeholder="••••••••"
+             onkeydown="if(event.key==='Enter')doLogin()" />
+    </div>
+    <button class="login-btn" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ APP ═══════════════ -->
+<div id="appShell">
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-logo">☕ Café Demo</div>
+    <div class="topbar-right">
+      <div class="topbar-user">Sesión: <span id="sessionName">—</span></div>
+      <button class="logout-btn" onclick="doLogout()">Salir</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="nav-section">General</div>
+      <div class="nav-item active" data-view="dashboard"><span class="nav-icon">◈</span> Dashboard</div>
+      <div class="nav-section">Gestión</div>
+      <div class="nav-item" data-view="clientes"><span class="nav-icon">👤</span> Clientes</div>
+      <div class="nav-item" data-view="productos"><span class="nav-icon">📦</span> Productos</div>
+      <div class="nav-item" data-view="facturas"><span class="nav-icon">🧾</span> Facturas</div>
+      <div class="nav-item" data-view="cobranzas"><span class="nav-icon">💰</span> Cobranzas</div>
+      <div class="nav-section">Admin</div>
+      <div class="nav-item" data-view="usuarios"><span class="nav-icon">🔑</span> Usuarios</div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="main">
+
+      <!-- ── DASHBOARD ── -->
+      <div class="view active" id="view-dashboard">
+        <div class="page-header">
+          <div><div class="page-title">Dashboard</div><div class="page-sub">Resumen general del sistema</div></div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card" style="--c:var(--accent2)">
+            <div class="stat-lbl">Clientes</div>
+            <div class="stat-val" id="d-clientes">—</div>
+            <div class="stat-hint">registrados</div>
+          </div>
+          <div class="stat-card" style="--c:var(--green)">
+            <div class="stat-lbl">Productos</div>
+            <div class="stat-val" id="d-productos" style="color:var(--green)">—</div>
+            <div class="stat-hint">en catálogo</div>
+          </div>
+          <div class="stat-card" style="--c:var(--blue)">
+            <div class="stat-lbl">Facturas</div>
+            <div class="stat-val" id="d-facturas" style="color:var(--blue)">—</div>
+            <div class="stat-hint">emitidas</div>
+          </div>
+          <div class="stat-card" style="--c:var(--red)">
+            <div class="stat-lbl">Cobranzas</div>
+            <div class="stat-val" id="d-cobranzas" style="color:var(--red)">—</div>
+            <div class="stat-hint">registradas</div>
+          </div>
+          <div class="stat-card" style="--c:var(--muted2)">
+            <div class="stat-lbl">Usuarios</div>
+            <div class="stat-val" id="d-usuarios" style="color:var(--muted2)">—</div>
+            <div class="stat-hint">del sistema</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div>
+            <div style="font-family:var(--font-head);font-size:1rem;color:var(--cream);margin-bottom:12px">Últimos clientes</div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Nombre</th><th>DNI</th><th>Teléfono</th></tr></thead>
+              <tbody id="d-tbl-clientes"><tr><td class="loading-cell" colspan="3"><span class="spinner"></span></td></tr></tbody>
+            </table></div>
+          </div>
+          <div>
+            <div style="font-family:var(--font-head);font-size:1rem;color:var(--cream);margin-bottom:12px">Últimas facturas</div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>ID</th><th>Total</th><th>Estado</th></tr></thead>
+              <tbody id="d-tbl-facturas"><tr><td class="loading-cell" colspan="3"><span class="spinner"></span></td></tr></tbody>
+            </table></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CLIENTES ── -->
+      <div class="view" id="view-clientes">
+        <div class="page-header">
+          <div><div class="page-title">Clientes</div><div class="page-sub">Gestión de clientes</div></div>
+          <button class="btn btn-primary" onclick="openModal('cliente')">+ Nuevo cliente</button>
+        </div>
+        <div class="toolbar">
+          <input class="inp inp-search" id="searchCliente" placeholder="🔍 Buscar por nombre o DNI..." oninput="filterTable('clientes')" />
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Nombre</th><th>DNI</th><th>Teléfono</th><th>Dirección</th><th>Fecha creación</th><th>Acciones</th></tr></thead>
+          <tbody id="tbl-clientes"><tr><td class="loading-cell" colspan="7"><span class="spinner"></span></td></tr></tbody>
+        </table></div>
+      </div>
+
+      <!-- ── PRODUCTOS ── -->
+      <div class="view" id="view-productos">
+        <div class="page-header">
+          <div><div class="page-title">Productos</div><div class="page-sub">Catálogo de productos</div></div>
+          <button class="btn btn-primary" onclick="openModal('producto')">+ Nuevo producto</button>
+        </div>
+        <div class="toolbar">
+          <input class="inp inp-search" id="searchProducto" placeholder="🔍 Buscar por descripción..." oninput="filterTable('productos')" />
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Descripción</th><th>Precio venta</th><th>Lote</th><th>Vencimiento</th><th>Proveedor ID</th><th>Acciones</th></tr></thead>
+          <tbody id="tbl-productos"><tr><td class="loading-cell" colspan="7"><span class="spinner"></span></td></tr></tbody>
+        </table></div>
+      </div>
+
+      <!-- ── FACTURAS ── -->
+      <div class="view" id="view-facturas">
+        <div class="page-header">
+          <div><div class="page-title">Facturas</div><div class="page-sub">Gestión de facturas</div></div>
+          <button class="btn btn-primary" onclick="openModal('factura')">+ Nueva factura</button>
+        </div>
+        <div class="toolbar">
+          <input class="inp inp-search" id="searchFactura" placeholder="🔍 Buscar por estado o cliente..." oninput="filterTable('facturas')" />
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Cliente ID</th><th>Fecha emisión</th><th>Total</th><th>Impuestos</th><th>Estado</th><th>Cobranza ID</th><th>Acciones</th></tr></thead>
+          <tbody id="tbl-facturas"><tr><td class="loading-cell" colspan="8"><span class="spinner"></span></td></tr></tbody>
+        </table></div>
+      </div>
+
+      <!-- ── COBRANZAS ── -->
+      <div class="view" id="view-cobranzas">
+        <div class="page-header">
+          <div><div class="page-title">Cobranzas</div><div class="page-sub">Registro de cobranzas</div></div>
+          <button class="btn btn-primary" onclick="openModal('cobranza')">+ Nueva cobranza</button>
+        </div>
+        <div class="toolbar">
+          <input class="inp inp-search" id="searchCobranza" placeholder="🔍 Buscar por método de pago..." oninput="filterTable('cobranzas')" />
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Monto</th><th>Método de pago</th><th>Fecha cobranza</th><th>Acciones</th></tr></thead>
+          <tbody id="tbl-cobranzas"><tr><td class="loading-cell" colspan="5"><span class="spinner"></span></td></tr></tbody>
+        </table></div>
+      </div>
+
+      <!-- ── USUARIOS ── -->
+      <div class="view" id="view-usuarios">
+        <div class="page-header">
+          <div><div class="page-title">Usuarios</div><div class="page-sub">Administración de usuarios</div></div>
+          <button class="btn btn-primary" onclick="openModal('usuario')">+ Nuevo usuario</button>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Nombre y apellido</th><th>Usuario</th><th>Acciones</th></tr></thead>
+          <tbody id="tbl-usuarios"><tr><td class="loading-cell" colspan="4"><span class="spinner"></span></td></tr></tbody>
+        </table></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ══ MODALES ══ -->
+
+<!-- Cliente -->
+<div class="overlay" id="ov-cliente">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title" id="titulo-cliente">Nuevo Cliente</div>
+      <button class="modal-close" onclick="closeModal('cliente')">✕</button>
+    </div>
+    <input type="hidden" id="c-id"/>
+    <div class="form-group"><label class="form-lbl">Nombre *</label><input class="form-inp" id="c-nombre" placeholder="Nombre completo"/><div class="form-err" id="c-nombre-err"></div></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-lbl">DNI *</label><input class="form-inp" id="c-dni" placeholder="12345678"/><div class="form-err" id="c-dni-err"></div></div>
+      <div class="form-group"><label class="form-lbl">Teléfono</label><input class="form-inp" id="c-tel" placeholder="11-1234-5678"/></div>
+    </div>
+    <div class="form-group"><label class="form-lbl">Dirección</label><input class="form-inp" id="c-dir" placeholder="Calle 123, Ciudad"/></div>
+    <div class="form-group"><label class="form-lbl">Fecha creación</label><input class="form-inp" id="c-fecha" type="date"/></div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeModal('cliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCliente()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Producto -->
+<div class="overlay" id="ov-producto">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title" id="titulo-producto">Nuevo Producto</div>
+      <button class="modal-close" onclick="closeModal('producto')">✕</button>
+    </div>
+    <input type="hidden" id="p-id"/>
+    <div class="form-group"><label class="form-lbl">Descripción *</label><input class="form-inp" id="p-desc" placeholder="Descripción del producto"/><div class="form-err" id="p-desc-err"></div></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-lbl">Precio venta *</label><input class="form-inp" id="p-precio" type="number" step="0.01" placeholder="0.00"/><div class="form-err" id="p-precio-err"></div></div>
+      <div class="form-group"><label class="form-lbl">Lote</label><input class="form-inp" id="p-lote" placeholder="LOT-001"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-lbl">Fecha vencimiento</label><input class="form-inp" id="p-venc" type="date"/></div>
+      <div class="form-group"><label class="form-lbl">ID Proveedor</label><input class="form-inp" id="p-prov" type="number" placeholder="1"/></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeModal('producto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveProducto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Factura -->
+<div class="overlay" id="ov-factura">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title" id="titulo-factura">Nueva Factura</div>
+      <button class="modal-close" onclick="closeModal('factura')">✕</button>
+    </div>
+    <input type="hidden" id="f-id"/>
+    <div class="form-row">
+      <div class="form-group"><label class="form-lbl">ID Cliente *</label><input class="form-inp" id="f-cliente" type="number" placeholder="1"/><div class="form-err" id="f-cliente-err"></div></div>
+      <div class="form-group"><label class="form-lbl">ID Cobranza</label><input class="form-inp" id="f-cobranza" type="number" placeholder="1"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-lbl">Total *</label><input class="form-inp" id="f-total" type="number" step="0.01" placeholder="0.00"/><div class="form-err" id="f-total-err"></div></div>
+      <div class="form-group"><label class="form-lbl">Impuestos</label><input class="form-inp" id="f-imp" type="number" step="0.01" placeholder="0.00"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-lbl">Estado</label>
+        <select class="form-inp" id="f-estado">
+          <option value="PENDIENTE">Pendiente</option>
+          <option value="PAGADA">Pagada</option>
+          <option value="ANULADA">Anulada</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-lbl">Fecha emisión</label><input class="form-inp" id="f-fecha" type="date"/></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeModal('factura')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFactura()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cobranza -->
+<div class="overlay" id="ov-cobranza">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title" id="titulo-cobranza">Nueva Cobranza</div>
+      <button class="modal-close" onclick="closeModal('cobranza')">✕</button>
+    </div>
+    <input type="hidden" id="cb-id"/>
+    <div class="form-group"><label class="form-lbl">Monto *</label><input class="form-inp" id="cb-monto" type="number" step="0.01" placeholder="0.00"/><div class="form-err" id="cb-monto-err"></div></div>
+    <div class="form-group"><label class="form-lbl">Método de pago</label>
+      <select class="form-inp" id="cb-metodo">
+        <option value="EFECTIVO">Efectivo</option>
+        <option value="TRANSFERENCIA">Transferencia</option>
+        <option value="TARJETA">Tarjeta</option>
+        <option value="CHEQUE">Cheque</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-lbl">Fecha cobranza</label><input class="form-inp" id="cb-fecha" type="date"/></div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeModal('cobranza')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCobranza()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Usuario -->
+<div class="overlay" id="ov-usuario">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title" id="titulo-usuario">Nuevo Usuario</div>
+      <button class="modal-close" onclick="closeModal('usuario')">✕</button>
+    </div>
+    <input type="hidden" id="u-id"/>
+    <div class="form-group"><label class="form-lbl">Nombre y apellido *</label><input class="form-inp" id="u-nombre" placeholder="Juan Pérez"/><div class="form-err" id="u-nombre-err"></div></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-lbl">Usuario *</label><input class="form-inp" id="u-user" placeholder="juanperez"/><div class="form-err" id="u-user-err"></div></div>
+      <div class="form-group"><label class="form-lbl">Contraseña *</label><input class="form-inp" id="u-pass" type="password" placeholder="••••••••"/><div class="form-err" id="u-pass-err"></div></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeModal('usuario')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveUsuario()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm -->
+<div class="overlay" id="ov-confirm">
+  <div class="modal" style="max-width:340px">
+    <div class="modal-hd">
+      <div class="modal-title">Confirmar eliminación</div>
+      <button class="modal-close" onclick="closeOverlay('ov-confirm')">✕</button>
+    </div>
+    <p class="confirm-msg" id="confirm-msg">¿Estás seguro? Esta acción no se puede deshacer.</p>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeOverlay('ov-confirm')">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-ok">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+const API = '/api';
+let session = null;
+// cache de datos para filtros
+const cache = { clientes:[], productos:[], facturas:[], cobranzas:[], usuarios:[] };
+
+// ══════════════════════════════════
+// AUTH
+// ══════════════════════════════════
+async function doLogin() {
+  const usuario = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  if (!usuario || !password) { document.getElementById('loginErr').textContent = 'Completá usuario y contraseña'; return; }
+  document.getElementById('loginErr').textContent = '';
+  try {
+    const res = await fetch(`${API}/usuarios/login`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ usuario, password })
+    });
+    if (!res.ok) throw new Error();
+    const user = await res.json();
+    if (!user || !user.id) throw new Error();
+    session = user;
+    document.getElementById('sessionName').textContent = user.nombreApellido || user.usuario;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appShell').classList.add('show');
+    loadDashboard();
+  } catch {
+    document.getElementById('loginErr').textContent = 'Usuario o contraseña incorrectos';
+  }
+}
+
+function doLogout() {
+  session = null;
+  document.getElementById('appShell').classList.remove('show');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+// ══════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    el.classList.add('active');
+    const v = el.dataset.view;
+    document.getElementById(`view-${v}`).classList.add('active');
+    if (v === 'dashboard')  loadDashboard();
+    if (v === 'clientes')   loadClientes();
+    if (v === 'productos')  loadProductos();
+    if (v === 'facturas')   loadFacturas();
+    if (v === 'cobranzas')  loadCobranzas();
+    if (v === 'usuarios')   loadUsuarios();
+  });
+});
+
+// ══════════════════════════════════
+// API HELPER
+// ══════════════════════════════════
+async function api(path, opts={}) {
+  const res = await fetch(API + path, { headers:{'Content-Type':'application/json'}, ...opts });
+  if (res.status === 204) return null;
+  if (!res.ok) throw await res.text();
+  return res.json();
+}
+
+// ══════════════════════════════════
+// TOAST
+// ══════════════════════════════════
+function toast(msg, type='ok') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${type==='ok'?'✓':'✗'}</span>${msg}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3400);
+}
+
+// ══════════════════════════════════
+// MODAL HELPERS
+// ══════════════════════════════════
+function openOverlay(id) { document.getElementById(id).classList.add('open'); }
+function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+function closeModal(name) { closeOverlay(`ov-${name}`); }
+function openModal(name, data=null) {
+  // reset errors
+  document.querySelectorAll(`#ov-${name} .form-err`).forEach(e => e.textContent='');
+  openOverlay(`ov-${name}`);
+}
+document.querySelectorAll('.overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target===o) o.classList.remove('open'); });
+});
+
+// ══════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════
+async function loadDashboard() {
+  try {
+    const [cls, prs, fcs, cbs, uss] = await Promise.all([
+      api('/cliente/listar'), api('/producto/listar'),
+      api('/factura/listar'), api('/cobranza/listar'), api('/usuarios')
+    ]);
+    document.getElementById('d-clientes').textContent  = cls.length;
+    document.getElementById('d-productos').textContent = prs.length;
+    document.getElementById('d-facturas').textContent  = fcs.length;
+    document.getElementById('d-cobranzas').textContent = cbs.length;
+    document.getElementById('d-usuarios').textContent  = uss.length;
+
+    // Últimos 5 clientes
+    const tc = document.getElementById('d-tbl-clientes');
+    tc.innerHTML = cls.slice(-5).reverse().map(c => `
+      <tr><td>${c.nombre||'—'}</td><td>${c.dni||'—'}</td><td>${c.telefono||'—'}</td></tr>`).join('')
+      || `<tr><td colspan="3"><div class="empty-state"><p>Sin datos</p></div></td></tr>`;
+
+    // Últimas 5 facturas
+    const tf = document.getElementById('d-tbl-facturas');
+    tf.innerHTML = fcs.slice(-5).reverse().map(f => `
+      <tr><td>#${f.id}</td><td>$${parseFloat(f.total||0).toFixed(2)}</td><td>${estadoBadge(f.estado)}</td></tr>`).join('')
+      || `<tr><td colspan="3"><div class="empty-state"><p>Sin datos</p></div></td></tr>`;
+  } catch(e) {
+    toast('Error cargando dashboard', 'err');
+  }
+}
+
+function estadoBadge(e) {
+  const map = { PAGADA:'badge-green', PENDIENTE:'badge-amber', ANULADA:'badge-red' };
+  return `<span class="badge ${map[e]||'badge-blue'}">${e||'—'}</span>`;
+}
+
+// ══════════════════════════════════
+// CLIENTES
+// ══════════════════════════════════
+async function loadClientes() {
+  const tbody = document.getElementById('tbl-clientes');
+  tbody.innerHTML = `<tr><td class="loading-cell" colspan="7"><span class="spinner"></span></td></tr>`;
+  try {
+    cache.clientes = await api('/cliente/listar');
+    renderClientes(cache.clientes);
+  } catch { toast('Error cargando clientes','err'); }
+}
+
+function renderClientes(data) {
+  const tbody = document.getElementById('tbl-clientes');
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-ico">👤</div><p>No hay clientes</p></div></td></tr>`; return; }
+  tbody.innerHTML = data.map(c => `
+    <tr>
+      <td><span style="color:var(--muted)">#${c.id}</span></td>
+      <td style="font-weight:500">${c.nombre||'—'}</td>
+      <td>${c.dni||'—'}</td>
+      <td>${c.telefono||'—'}</td>
+      <td style="color:var(--muted2)">${c.direccion||'—'}</td>
+      <td style="color:var(--muted2)">${c.fechaCreacion||'—'}</td>
+      <td><div class="td-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editCliente(${c.id})">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDel('cliente',${c.id},'${(c.nombre||'').replace(/'/g,"\\'")}')">Borrar</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function filterTable(section) {
+  const q = document.getElementById(`search${cap(section.slice(0,-1))}`).value.toLowerCase();
+  if (section==='clientes')  renderClientes(cache.clientes.filter(c => (c.nombre+c.dni).toLowerCase().includes(q)));
+  if (section==='productos') renderProductos(cache.productos.filter(p => (p.descripcion||'').toLowerCase().includes(q)));
+  if (section==='facturas')  renderFacturas(cache.facturas.filter(f => (f.estado+f.idCliente).toString().toLowerCase().includes(q)));
+  if (section==='cobranzas') renderCobranzas(cache.cobranzas.filter(c => (c.metodoDePago||'').toLowerCase().includes(q)));
+}
+
+function cap(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
+
+function openModal(name, data=null) {
+  document.querySelectorAll(`#ov-${name} .form-err`).forEach(e => e.textContent='');
+  openOverlay(`ov-${name}`);
+}
+
+function editCliente(id) {
+  const c = cache.clientes.find(x => x.id===id);
+  if (!c) return;
+  document.getElementById('c-id').value    = c.id;
+  document.getElementById('c-nombre').value = c.nombre||'';
+  document.getElementById('c-dni').value   = c.dni||'';
+  document.getElementById('c-tel').value   = c.telefono||'';
+  document.getElementById('c-dir').value   = c.direccion||'';
+  document.getElementById('c-fecha').value = c.fechaCreacion||'';
+  document.getElementById('titulo-cliente').textContent = 'Editar Cliente';
+  openOverlay('ov-cliente');
+}
+
+async function saveCliente() {
+  const id     = document.getElementById('c-id').value;
+  const nombre = document.getElementById('c-nombre').value.trim();
+  const dni    = document.getElementById('c-dni').value.trim();
+  let valid = true;
+  if (!nombre) { document.getElementById('c-nombre-err').textContent='Requerido'; valid=false; }
+  if (!dni)    { document.getElementById('c-dni-err').textContent='Requerido'; valid=false; }
+  if (!valid) return;
+
+  const body = {
+    nombre, dni,
+    telefono:  document.getElementById('c-tel').value,
+    direccion: document.getElementById('c-dir').value,
+    fechaCreacion: document.getElementById('c-fecha').value
+  };
+  try {
+    if (id) { await api(`/cliente/${id}`, {method:'PUT',body:JSON.stringify(body)}); toast('Cliente actualizado'); }
+    else    { await api('/cliente', {method:'POST',body:JSON.stringify(body)}); toast('Cliente creado'); }
+    closeModal('cliente');
+    document.getElementById('c-id').value='';
+    document.getElementById('titulo-cliente').textContent='Nuevo Cliente';
+    loadClientes();
+  } catch { toast('Error al guardar cliente','err'); }
+}
+
+// ══════════════════════════════════
+// PRODUCTOS
+// ══════════════════════════════════
+async function loadProductos() {
+  const tbody = document.getElementById('tbl-productos');
+  tbody.innerHTML = `<tr><td class="loading-cell" colspan="7"><span class="spinner"></span></td></tr>`;
+  try {
+    cache.productos = await api('/producto/listar');
+    renderProductos(cache.productos);
+  } catch { toast('Error cargando productos','err'); }
+}
+
+function renderProductos(data) {
+  const tbody = document.getElementById('tbl-productos');
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-ico">📦</div><p>No hay productos</p></div></td></tr>`; return; }
+  tbody.innerHTML = data.map(p => `
+    <tr>
+      <td><span style="color:var(--muted)">#${p.id}</span></td>
+      <td style="font-weight:500">${p.descripcion||'—'}</td>
+      <td class style="color:var(--green)">$${parseFloat(p.precioVenta||0).toFixed(2)}</td>
+      <td>${p.lote||'—'}</td>
+      <td style="color:var(--muted2)">${p.fechaVencimiento||'—'}</td>
+      <td>${p.idProveedor||'—'}</td>
+      <td><div class="td-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editProducto(${p.id})">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDel('producto',${p.id},'${(p.descripcion||'').replace(/'/g,"\\'")}')">Borrar</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function editProducto(id) {
+  const p = cache.productos.find(x => x.id===id);
+  if (!p) return;
+  document.getElementById('p-id').value     = p.id;
+  document.getElementById('p-desc').value   = p.descripcion||'';
+  document.getElementById('p-precio').value = p.precioVenta||'';
+  document.getElementById('p-lote').value   = p.lote||'';
+  document.getElementById('p-venc').value   = p.fechaVencimiento||'';
+  document.getElementById('p-prov').value   = p.idProveedor||'';
+  document.getElementById('titulo-producto').textContent='Editar Producto';
+  openOverlay('ov-producto');
+}
+
+async function saveProducto() {
+  const id   = document.getElementById('p-id').value;
+  const desc = document.getElementById('p-desc').value.trim();
+  const precio = document.getElementById('p-precio').value;
+  let valid = true;
+  if (!desc)   { document.getElementById('p-desc-err').textContent='Requerido'; valid=false; }
+  if (!precio) { document.getElementById('p-precio-err').textContent='Requerido'; valid=false; }
+  if (!valid) return;
+
+  const body = {
+    descripcion: desc, precioVenta: parseFloat(precio),
+    lote: document.getElementById('p-lote').value,
+    fechaVencimiento: document.getElementById('p-venc').value,
+    idProveedor: parseInt(document.getElementById('p-prov').value)||null
+  };
+  try {
+    if (id) { await api(`/producto/${id}`, {method:'PUT',body:JSON.stringify(body)}); toast('Producto actualizado'); }
+    else    { await api('/producto', {method:'POST',body:JSON.stringify(body)}); toast('Producto creado'); }
+    closeModal('producto');
+    document.getElementById('p-id').value='';
+    document.getElementById('titulo-producto').textContent='Nuevo Producto';
+    loadProductos();
+  } catch { toast('Error al guardar producto','err'); }
+}
+
+// ══════════════════════════════════
+// FACTURAS
+// ══════════════════════════════════
+async function loadFacturas() {
+  const tbody = document.getElementById('tbl-facturas');
+  tbody.innerHTML = `<tr><td class="loading-cell" colspan="8"><span class="spinner"></span></td></tr>`;
+  try {
+    cache.facturas = await api('/factura/listar');
+    renderFacturas(cache.facturas);
+  } catch { toast('Error cargando facturas','err'); }
+}
+
+function renderFacturas(data) {
+  const tbody = document.getElementById('tbl-facturas');
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-ico">🧾</div><p>No hay facturas</p></div></td></tr>`; return; }
+  tbody.innerHTML = data.map(f => `
+    <tr>
+      <td><span style="color:var(--muted)">#${f.id}</span></td>
+      <td>${f.idCliente||'—'}</td>
+      <td style="color:var(--muted2)">${f.fechaEmision||'—'}</td>
+      <td style="color:var(--green)">$${parseFloat(f.total||0).toFixed(2)}</td>
+      <td style="color:var(--muted2)">$${parseFloat(f.impuestos||0).toFixed(2)}</td>
+      <td>${estadoBadge(f.estado)}</td>
+      <td>${f.cobranza||'—'}</td>
+      <td><div class="td-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editFactura(${f.id})">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDel('factura',${f.id},'Factura #${f.id}')">Borrar</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function editFactura(id) {
+  const f = cache.facturas.find(x => x.id===id);
+  if (!f) return;
+  document.getElementById('f-id').value      = f.id;
+  document.getElementById('f-cliente').value = f.idCliente||'';
+  document.getElementById('f-cobranza').value= f.cobranza||'';
+  document.getElementById('f-total').value   = f.total||'';
+  document.getElementById('f-imp').value     = f.impuestos||'';
+  document.getElementById('f-estado').value  = f.estado||'PENDIENTE';
+  document.getElementById('f-fecha').value   = f.fechaEmision||'';
+  document.getElementById('titulo-factura').textContent='Editar Factura';
+  openOverlay('ov-factura');
+}
+
+async function saveFactura() {
+  const id      = document.getElementById('f-id').value;
+  const cliente = document.getElementById('f-cliente').value;
+  const total   = document.getElementById('f-total').value;
+  let valid = true;
+  if (!cliente) { document.getElementById('f-cliente-err').textContent='Requerido'; valid=false; }
+  if (!total)   { document.getElementById('f-total-err').textContent='Requerido'; valid=false; }
+  if (!valid) return;
+
+  const body = {
+    idCliente:    parseInt(cliente),
+    cobranza:     parseInt(document.getElementById('f-cobranza').value)||null,
+    total:        parseFloat(total),
+    impuestos:    parseFloat(document.getElementById('f-imp').value)||0,
+    estado:       document.getElementById('f-estado').value,
+    fechaEmision: document.getElementById('f-fecha').value
+  };
+  try {
+    if (id) { await api(`/factura/${id}`, {method:'PUT',body:JSON.stringify(body)}); toast('Factura actualizada'); }
+    else    { await api('/factura', {method:'POST',body:JSON.stringify(body)}); toast('Factura creada'); }
+    closeModal('factura');
+    document.getElementById('f-id').value='';
+    document.getElementById('titulo-factura').textContent='Nueva Factura';
+    loadFacturas();
+  } catch { toast('Error al guardar factura','err'); }
+}
+
+// ══════════════════════════════════
+// COBRANZAS
+// ══════════════════════════════════
+async function loadCobranzas() {
+  const tbody = document.getElementById('tbl-cobranzas');
+  tbody.innerHTML = `<tr><td class="loading-cell" colspan="5"><span class="spinner"></span></td></tr>`;
+  try {
+    cache.cobranzas = await api('/cobranza/listar');
+    renderCobranzas(cache.cobranzas);
+  } catch { toast('Error cargando cobranzas','err'); }
+}
+
+function renderCobranzas(data) {
+  const tbody = document.getElementById('tbl-cobranzas');
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-ico">💰</div><p>No hay cobranzas</p></div></td></tr>`; return; }
+  tbody.innerHTML = data.map(c => `
+    <tr>
+      <td><span style="color:var(--muted)">#${c.id}</span></td>
+      <td style="color:var(--green)">$${parseFloat(c.monto||0).toFixed(2)}</td>
+      <td><span class="badge badge-blue">${c.metodoDePago||'—'}</span></td>
+      <td style="color:var(--muted2)">${c.fechaCobranza||'—'}</td>
+      <td><div class="td-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editCobranza(${c.id})">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDel('cobranza',${c.id},'Cobranza #${c.id}')">Borrar</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function editCobranza(id) {
+  const c = cache.cobranzas.find(x => x.id===id);
+  if (!c) return;
+  document.getElementById('cb-id').value     = c.id;
+  document.getElementById('cb-monto').value  = c.monto||'';
+  document.getElementById('cb-metodo').value = c.metodoDePago||'EFECTIVO';
+  document.getElementById('cb-fecha').value  = c.fechaCobranza||'';
+  document.getElementById('titulo-cobranza').textContent='Editar Cobranza';
+  openOverlay('ov-cobranza');
+}
+
+async function saveCobranza() {
+  const id    = document.getElementById('cb-id').value;
+  const monto = document.getElementById('cb-monto').value;
+  if (!monto) { document.getElementById('cb-monto-err').textContent='Requerido'; return; }
+
+  const body = {
+    monto:          parseFloat(monto),
+    metodoDePago:   document.getElementById('cb-metodo').value,
+    fechaCobranza:  document.getElementById('cb-fecha').value
+  };
+  try {
+    if (id) { await api(`/cobranza/${id}`, {method:'PUT',body:JSON.stringify(body)}); toast('Cobranza actualizada'); }
+    else    { await api('/cobranza', {method:'POST',body:JSON.stringify(body)}); toast('Cobranza creada'); }
+    closeModal('cobranza');
+    document.getElementById('cb-id').value='';
+    document.getElementById('titulo-cobranza').textContent='Nueva Cobranza';
+    loadCobranzas();
+  } catch { toast('Error al guardar cobranza','err'); }
+}
+
+// ══════════════════════════════════
+// USUARIOS
+// ══════════════════════════════════
+async function loadUsuarios() {
+  const tbody = document.getElementById('tbl-usuarios');
+  tbody.innerHTML = `<tr><td class="loading-cell" colspan="4"><span class="spinner"></span></td></tr>`;
+  try {
+    cache.usuarios = await api('/usuarios');
+    renderUsuarios(cache.usuarios);
+  } catch { toast('Error cargando usuarios','err'); }
+}
+
+function renderUsuarios(data) {
+  const tbody = document.getElementById('tbl-usuarios');
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-ico">🔑</div><p>No hay usuarios</p></div></td></tr>`; return; }
+  tbody.innerHTML = data.map(u => `
+    <tr>
+      <td><span style="color:var(--muted)">#${u.id}</span></td>
+      <td style="font-weight:500">${u.nombreApellido||'—'}</td>
+      <td><span class="badge badge-amber">${u.usuario||'—'}</span></td>
+      <td><div class="td-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editUsuario(${u.id})">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDel('usuario',${u.id},'${(u.usuario||'').replace(/'/g,"\\'")}')">Borrar</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function editUsuario(id) {
+  const u = cache.usuarios.find(x => x.id===id);
+  if (!u) return;
+  document.getElementById('u-id').value     = u.id;
+  document.getElementById('u-nombre').value = u.nombreApellido||'';
+  document.getElementById('u-user').value   = u.usuario||'';
+  document.getElementById('u-pass').value   = '';
+  document.getElementById('titulo-usuario').textContent='Editar Usuario';
+  openOverlay('ov-usuario');
+}
+
+async function saveUsuario() {
+  const id     = document.getElementById('u-id').value;
+  const nombre = document.getElementById('u-nombre').value.trim();
+  const user   = document.getElementById('u-user').value.trim();
+  const pass   = document.getElementById('u-pass').value;
+  let valid = true;
+  if (!nombre) { document.getElementById('u-nombre-err').textContent='Requerido'; valid=false; }
+  if (!user)   { document.getElementById('u-user-err').textContent='Requerido'; valid=false; }
+  if (!id && !pass) { document.getElementById('u-pass-err').textContent='Requerido'; valid=false; }
+  if (!valid) return;
+
+  const body = { nombreApellido:nombre, usuario:user, password:pass||undefined };
+  try {
+    if (id) { await api(`/usuarios/${id}`, {method:'PUT',body:JSON.stringify(body)}); toast('Usuario actualizado'); }
+    else    { await api('/usuarios', {method:'POST',body:JSON.stringify(body)}); toast('Usuario creado'); }
+    closeModal('usuario');
+    document.getElementById('u-id').value='';
+    document.getElementById('titulo-usuario').textContent='Nuevo Usuario';
+    loadUsuarios();
+  } catch { toast('Error al guardar usuario','err'); }
+}
+
+// ══════════════════════════════════
+// DELETE
+// ══════════════════════════════════
+const endpointMap = { cliente:'/cliente', producto:'/producto', factura:'/factura', cobranza:'/cobranza', usuario:'/usuarios' };
+const reloadMap   = { cliente:loadClientes, producto:loadProductos, factura:loadFacturas, cobranza:loadCobranzas, usuario:loadUsuarios };
+
+function confirmDel(type, id, label) {
+  document.getElementById('confirm-msg').textContent = `¿Eliminar "${label}"? Esta acción no se puede deshacer.`;
+  document.getElementById('confirm-ok').onclick = async () => {
+    try {
+      await api(`${endpointMap[type]}/${id}`, {method:'DELETE'});
+      toast(`${cap(type)} eliminado`);
+      closeOverlay('ov-confirm');
+      reloadMap[type]();
+      if (type==='cliente'||type==='factura') loadDashboard();
+    } catch { toast('Error al eliminar','err'); }
+  };
+  openOverlay('ov-confirm');
+}
+</script>
+</body>
+</html>
