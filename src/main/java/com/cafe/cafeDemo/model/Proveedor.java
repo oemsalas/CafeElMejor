@@ -1,6 +1,5 @@
 package com.cafe.cafeDemo.model;
 
-import java.sql.Date;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,15 +9,14 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Cliente {
+public class Proveedor {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
     private String nombre;
+    private String contacto;
+    private String telefono;
     private String direccion;
-    private int telefono;
-    private Date fechaCreacion;
-    private int dni;
 }

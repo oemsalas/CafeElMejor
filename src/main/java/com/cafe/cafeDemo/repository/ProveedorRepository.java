@@ -1,9 +1,9 @@
 package com.cafe.cafeDemo.repository;
 
-import com.cafe.cafeDemo.model.Cliente;
+import com.cafe.cafeDemo.model.Proveedor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ClienteRepository extends JpaRepository<Cliente, Long> {
+public interface ProveedorRepository extends JpaRepository<Proveedor, Long> {
 }

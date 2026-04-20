@@ -1,16 +1,8 @@
 package com.cafe.cafeDemo.model;
 
 import java.sql.Date;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table
@@ -19,16 +11,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class Producto {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private int id;
-	
-	private String descripcion; 
-	private float precioVenta; 
-	private int stockActual; 
-	private int stockMinimo; 
-	private int stockMaximo; 
-	private String lote;
-	private Date fechaVencimiento; 
-	private int idProveedor;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    private String descripcion;
+    private double precioVenta;
+    private String lote;
+    private Date fechaVencimiento;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_proveedor", nullable = true)
+    private Proveedor proveedor;
 }
