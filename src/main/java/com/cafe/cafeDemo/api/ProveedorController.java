@@ -1,7 +1,9 @@
 package com.cafe.cafeDemo.api;
 
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.cafe.cafeDemo.exception.ResourceNotFoundException;
@@ -17,8 +19,14 @@ public class ProveedorController {
     private ProveedorRepository proveedorRepository;
 
     @GetMapping("/listar")
-    public List<Proveedor> getAllProveedores() {
-        return proveedorRepository.findAll();
+    public Page<Proveedor> getAllProveedores(
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "8")  int size,
+            @RequestParam(defaultValue = "")   String search) {
+        var pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        return search.isBlank()
+                ? proveedorRepository.findAll(pageable)
+                : proveedorRepository.search(search, pageable);
     }
 
     @PostMapping

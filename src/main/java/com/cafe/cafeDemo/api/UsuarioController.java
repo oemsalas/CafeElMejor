@@ -1,7 +1,9 @@
 package com.cafe.cafeDemo.api;
 
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.cafe.cafeDemo.exception.ResourceNotFoundException;
@@ -16,8 +18,14 @@ public class UsuarioController {
     private UsuarioRepository usuarioRepository;
 
     @GetMapping
-    public List<Usuario> getUsuarios() {
-        return usuarioRepository.findAll();
+    public Page<Usuario> getUsuarios(
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "8")  int size,
+            @RequestParam(defaultValue = "")   String search) {
+        var pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        return search.isBlank()
+                ? usuarioRepository.findAll(pageable)
+                : usuarioRepository.search(search, pageable);
     }
 
     @PostMapping("/login")

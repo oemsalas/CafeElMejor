@@ -2,6 +2,9 @@ package com.cafe.cafeDemo.api;
 
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.cafe.cafeDemo.exception.ResourceNotFoundException;
@@ -17,8 +20,20 @@ public class ClienteController {
     private ClienteRepository clienteRepository;
 
     @GetMapping("/listar")
-    public List<Cliente> getAllClientes() {
-        return clienteRepository.findAll();
+    public Page<Cliente> getAllClientes(
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "8")  int size,
+            @RequestParam(defaultValue = "")   String search) {
+        var pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        return search.isBlank()
+                ? clienteRepository.findAll(pageable)
+                : clienteRepository.search(search, pageable);
+    }
+
+    // Endpoint sin paginar para usar en dropdown de Factura
+    @GetMapping("/todos")
+    public List<Cliente> getTodosClientes() {
+        return clienteRepository.findAll(Sort.by("nombre"));
     }
 
     @PostMapping

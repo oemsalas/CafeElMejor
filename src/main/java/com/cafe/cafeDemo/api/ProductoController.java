@@ -1,8 +1,9 @@
 package com.cafe.cafeDemo.api;
 
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.cafe.cafeDemo.exception.ResourceNotFoundException;
@@ -22,9 +23,21 @@ public class ProductoController {
     @Autowired
     private ProveedorRepository proveedorRepository;
 
-    @GetMapping(value = "/listar", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<Producto> getAllProductos() {
-        return productoRepository.findAll();
+    @GetMapping("/listar")
+    public Page<Producto> getAllProductos(
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "8")  int size,
+            @RequestParam(defaultValue = "")   String search) {
+        var pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        return search.isBlank()
+                ? productoRepository.findAll(pageable)
+                : productoRepository.search(search, pageable);
+    }
+
+    // Endpoint sin paginar para usar en dropdowns/selects del frontend
+    @GetMapping("/todos")
+    public java.util.List<Producto> getTodosProductos() {
+        return productoRepository.findAll(Sort.by("descripcion"));
     }
 
     @PostMapping
