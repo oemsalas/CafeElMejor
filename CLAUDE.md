@@ -1,274 +1,252 @@
-# CLAUDE.md — Café Demo Frontend
+# CLAUDE.md — Proyecto CaféDemo
 
-## Descripción del proyecto
+Este archivo le da contexto a Claude sobre el proyecto CaféDemo para que pueda continuar el desarrollo sin necesidad de re-explicar lo que ya se hizo.
 
-Frontend SPA (Single Page Application) para el sistema de administración **Café Demo**, desarrollado en HTML5 y JavaScript vanilla puro. Se sirve directamente desde Spring Boot como recurso estático en `src/main/resources/static/index.html` y consume la API REST del backend en `localhost:8080`.
+---
+
+## ¿Qué es CaféDemo?
+
+Sistema de gestión para una cafetería, compuesto por un backend en Spring Boot y dos frontends: uno en React y otro en HTML5 vanilla. Corre en una **Raspberry Pi 2 (475MB RAM)** con DietPi como sistema operativo.
 
 ---
 
 ## Stack tecnológico
 
-| Tecnología | Uso |
+| Capa | Tecnología |
 |---|---|
-| HTML5 + CSS3 | Estructura y estilos (sin frameworks CSS) |
-| JavaScript ES2020+ | Lógica, navegación y consumo de API |
-| Google Fonts | `Playfair Display` (títulos) + `DM Sans` (cuerpo) |
-| Spring Boot (static) | Servidor de archivos estáticos |
-| Fetch API | Comunicación con el backend REST |
+| Backend | Java 17 + Spring Boot 3.2 |
+| Base de datos | H2 embebida en archivo (sin MySQL) |
+| Servidor web | Undertow (reemplaza Tomcat, más liviano) |
+| Pool de conexiones | commons-dbcp2 (reemplaza HikariCP) |
+| PDF | iText 7.2.5 |
+| Frontend 1 | React + Vite + Bootstrap 5 |
+| Frontend 2 | HTML5 vanilla + Bootstrap 5 + Chart.js 4.4.1 |
+| Proxy reverso | Nginx |
+| Servicio | systemd en DietPi |
 
 ---
 
-## Arquitectura del archivo
+## Infraestructura
 
-El frontend es un único archivo `index.html` que contiene tres secciones bien diferenciadas:
+- **Dominio:** `caelus.homelinuxserver.org`
+- **Nginx** sirve el HTML estático en el puerto 80 y redirige `/api/*` al backend en el puerto 8080
+- **Spring Boot** corre en el puerto 8080 (no expuesto directamente)
+- **Servicio systemd:** `/etc/systemd/system/cafedemo.service`
+- **JAR:** arranca con `java -Xms64m -Xmx200m -jar cafeDemo-0.0.1-SNAPSHOT.jar`
+- **Base de datos:** archivo `cafedemo-data` en el mismo directorio del JAR
 
-```
-index.html
-├── <style>          → Todos los estilos CSS con variables CSS (:root)
-├── <body>           → Estructura HTML (login + app shell)
-│   ├── #loginScreen       → Pantalla de autenticación
-│   ├── #appShell          → Contenedor principal (sidebar + topbar + main)
-│   │   ├── .sidebar       → Navegación lateral
-│   │   ├── .topbar        → Barra superior con usuario y logout
-│   │   └── .main          → Vistas intercambiables (una por sección)
-│   └── Modales (overlay)  → Un modal por entidad + modal de confirmación
-└── <script>         → Toda la lógica JS
-```
-
----
-
-## Endpoints consumidos
-
-El frontend apunta a `BASE_URL = '/api'` y consume los siguientes endpoints:
-
-### Autenticación
-| Método | Endpoint | Descripción |
-|---|---|---|
-| POST | `/api/usuarios/login` | Login con `{ usuario, password }` |
-
-### Clientes
-| Método | Endpoint | Descripción |
-|---|---|---|
-| GET | `/api/cliente/listar` | Listar todos |
-| GET | `/api/cliente/{id}` | Obtener por ID |
-| POST | `/api/cliente` | Crear |
-| PUT | `/api/cliente/{id}` | Actualizar |
-| DELETE | `/api/cliente/{id}` | Eliminar |
-
-### Productos
-| Método | Endpoint | Descripción |
-|---|---|---|
-| GET | `/api/producto/listar` | Listar todos |
-| GET | `/api/producto/{id}` | Obtener por ID |
-| POST | `/api/producto` | Crear |
-| PUT | `/api/producto/{id}` | Actualizar |
-| DELETE | `/api/producto/{id}` | Eliminar |
-
-### Facturas
-| Método | Endpoint | Descripción |
-|---|---|---|
-| GET | `/api/factura/listar` | Listar todas |
-| GET | `/api/factura/{id}` | Obtener por ID |
-| POST | `/api/factura` | Crear |
-| PUT | `/api/factura/{id}` | Actualizar |
-| DELETE | `/api/factura/{id}` | Eliminar |
-
-### Cobranzas
-| Método | Endpoint | Descripción |
-|---|---|---|
-| GET | `/api/cobranza/listar` | Listar todas |
-| GET | `/api/cobranza/{id}` | Obtener por ID |
-| POST | `/api/cobranza` | Crear |
-| PUT | `/api/cobranza/{id}` | Actualizar |
-| DELETE | `/api/cobranza/{id}` | Eliminar |
-
-### Usuarios
-| Método | Endpoint | Descripción |
-|---|---|---|
-| GET | `/api/usuarios` | Listar todos |
-| GET | `/api/usuarios/{id}` | Obtener por ID |
-| POST | `/api/usuarios` | Crear |
-| PUT | `/api/usuarios/{id}` | Actualizar |
-| DELETE | `/api/usuarios/{id}` | Eliminar |
-
----
-
-## Modelo de datos esperado por el frontend
-
-### Cliente
-```json
-{
-  "id": 1,
-  "nombre": "Juan Pérez",
-  "dni": "12345678",
-  "telefono": "11-1234-5678",
-  "direccion": "Calle 123, Ciudad",
-  "fechaCreacion": "2024-01-15"
+### Configuración Nginx
+```nginx
+location /api/ {
+    proxy_pass http://localhost:8080/api/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
 }
-```
-
-### Producto
-```json
-{
-  "id": 1,
-  "descripcion": "Café molido 500g",
-  "precioVenta": 1500.00,
-  "lote": "LOT-001",
-  "fechaVencimiento": "2025-12-31",
-  "idProveedor": 1
-}
-```
-
-### Factura
-```json
-{
-  "id": 1,
-  "idCliente": 1,
-  "cobranza": 1,
-  "total": 3000.00,
-  "impuestos": 630.00,
-  "estado": "PENDIENTE",
-  "fechaEmision": "2024-03-01"
-}
-```
-> Estados válidos: `PENDIENTE`, `PAGADA`, `ANULADA`
-
-### Cobranza
-```json
-{
-  "id": 1,
-  "monto": 3000.00,
-  "metodoDePago": "EFECTIVO",
-  "fechaCobranza": "2024-03-05"
-}
-```
-> Métodos válidos: `EFECTIVO`, `TRANSFERENCIA`, `TARJETA`, `CHEQUE`
-
-### Usuario
-```json
-{
-  "id": 1,
-  "nombreApellido": "Admin Sistema",
-  "usuario": "admin",
-  "password": "1234"
+location / {
+    try_files $uri $uri/ /index.html;
 }
 ```
 
 ---
 
-## Flujo de autenticación
+## Modelo de datos
 
-1. El usuario ingresa credenciales en la pantalla de login
-2. Se hace `POST /api/usuarios/login` con `{ usuario, password }`
-3. Si la respuesta contiene un objeto con `id`, la sesión se guarda en la variable `session` (en memoria)
-4. Se oculta `#loginScreen` y se muestra `#appShell`
-5. Al hacer logout, `session` se limpia y se vuelve a mostrar el login
-6. **No hay JWT ni cookies** — la sesión dura mientras el tab esté abierto
+### Entidades y relaciones
+
+```
+Cliente ←── Factura ──→ Cobranza
+                │
+                └──→ Producto ──→ Proveedor
+Usuario (independiente)
+```
+
+- `Factura → Cliente`: `@ManyToOne` obligatorio
+- `Factura → Cobranza`: `@ManyToOne` opcional. **Regla de negocio:** al asignar una cobranza la factura pasa automáticamente a estado `PAGADA`. Al quitarla vuelve a `PENDIENTE` (salvo que esté `CANCELADA`)
+- `Factura → Producto`: `@ManyToMany` tabla intermedia `factura_producto`
+- `Producto → Proveedor`: `@ManyToOne` opcional
+
+### Campos relevantes por entidad
+
+**Cliente:** id, nombre, dni, telefono, direccion, fechaCreacion
+
+**Proveedor:** id, nombre, contacto, telefono, direccion
+
+**Producto:** id, descripcion, precioVenta, lote, fechaVencimiento, proveedor
+
+**Cobranza:** id, monto, fechaCobranza, metodoDePago (EFECTIVO / TRANSFERENCIA / TARJETA_DEBITO / TARJETA_CREDITO / CHEQUE)
+
+**Factura:** idFactura, fechaEmision, total, impuestos, estado (PAGADA / PENDIENTE / VENCIDA / CANCELADA), cliente, cobranza, productos
+
+**Usuario:** id, nombreApellido, usuario, password
 
 ---
 
-## Estructura del JavaScript
+## Package structure del backend
 
-### Variables globales
+```
+com.cafe.cafeDemo
+├── api/
+│   ├── ClienteController.java
+│   ├── ProveedorController.java
+│   ├── ProductoController.java
+│   ├── CobranzaController.java
+│   ├── FacturaController.java
+│   └── UsuarioController.java
+├── model/
+│   ├── Cliente.java
+│   ├── Proveedor.java
+│   ├── Producto.java
+│   ├── Cobranza.java
+│   ├── Factura.java
+│   └── Usuario.java
+├── repository/
+│   ├── ClienteRepository.java      ← tiene método search()
+│   ├── ProveedorRepository.java    ← tiene método search()
+│   ├── ProductosRepository.java    ← tiene método search()
+│   ├── CobranzaRepository.java     ← tiene método search()
+│   ├── FacturaRepository.java      ← tiene método search()
+│   └── UsuarioRepository.java      ← tiene getUsuarioByPassword() y search()
+├── service/
+│   └── FacturaPdfService.java      ← genera PDF con iText 7
+├── exception/
+│   └── ResourceNotFoundException.java
+└── CafeDemoApplication.java
+```
+
+---
+
+## Endpoints API
+
+Todos los endpoints de listado soportan paginación server-side:
+`GET /api/{entidad}/listar?page=0&size=8&search=término`
+
+La respuesta es un objeto `Page<T>` de Spring con:
+```json
+{
+  "content": [...],
+  "totalElements": 100,
+  "totalPages": 13,
+  "number": 0,
+  "size": 8
+}
+```
+
+### Endpoints especiales
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| POST | `/api/usuarios/login` | Login, recibe `{usuario, password}` |
+| GET | `/api/cliente/todos` | Lista todos los clientes sin paginar (para dropdowns) |
+| GET | `/api/producto/todos` | Lista todos los productos sin paginar (para dropdowns) |
+| GET | `/api/cobranza/todas` | Lista todas las cobranzas sin paginar (para dropdowns) |
+| GET | `/api/factura/{id}/pdf` | Descarga la factura como PDF |
+| PUT | `/api/factura/{id}/cobranza/{idCobranza}` | Asigna cobranza → pasa a PAGADA |
+| DELETE | `/api/factura/{id}/cobranza` | Quita cobranza → vuelve a PENDIENTE |
+| POST | `/api/factura/{id}/producto/{idProducto}` | Agrega producto a factura |
+| DELETE | `/api/factura/{id}/producto/{idProducto}` | Quita producto de factura |
+
+---
+
+## Frontend HTML5 (cafedemo-v2.html)
+
+Archivo único con todo incluido. Puntos clave de la arquitectura JS:
+
 ```javascript
-const API = '/api';         // Base URL de la API
-let session = null;         // Usuario autenticado en memoria
-const cache = {             // Cache de datos para filtros client-side
-  clientes: [],
-  productos: [],
-  facturas: [],
-  cobranzas: [],
-  usuarios: []
-};
+const API = '/api';                    // base URL — funciona con proxy Nginx
+const cache = { clientes:[], ... };    // cache de la página actual
+const pageState = {};                  // { seccion: { page, totalPages, totalElements } }
+const PAGE_SIZE = 8;                   // registros por página
 ```
 
-### Funciones principales
+### Paginación server-side
+- `loadSection(section, page)` — carga una página del backend
+- `filterTable(section)` — debounce 350ms, llama a `loadSection` con `?search=`
+- `goPage(section, page)` — cambia de página
+- Los loaders `loadClientes()`, `loadFacturas()` etc. son wrappers de `loadSection()`
 
-| Función | Descripción |
-|---|---|
-| `doLogin()` | Autentica al usuario |
-| `doLogout()` | Cierra sesión |
-| `api(path, opts)` | Helper fetch con manejo de errores |
-| `toast(msg, type)` | Muestra notificaciones (`ok` / `err`) |
-| `openModal(name)` / `closeModal(name)` | Control de modales |
-| `loadDashboard()` | Carga estadísticas y tablas resumidas |
-| `loadClientes()` / `renderClientes()` | Carga y renderiza clientes |
-| `editCliente(id)` / `saveCliente()` | Edición y guardado de cliente |
-| `filterTable(section)` | Filtro client-side sobre el cache |
-| `confirmDel(type, id, label)` | Modal de confirmación de eliminación |
+### Separación render interno / público
+- `_renderClientes(data)` etc. — pintan el array recibido directamente
+- `renderClientes(data)` etc. — wrappers públicos que llaman a `_render*()`
 
-El mismo patrón `load → render → edit → save` se repite para todas las entidades.
+### Dashboard
+- Llama a todos los endpoints con `size=1000` para tener datos completos para los gráficos
+- Usa `Page.content` para los arrays y `Page.totalElements` para los contadores
+- 5 gráficos Chart.js: ventas por mes (barras), recaudado por mes (línea), productos más facturados (barras horizontal), facturas por estado (donut), cobranzas por método (donut)
+
+### Lógica de estado en modal Factura
+- Al seleccionar cobranza → estado se fuerza a PAGADA y el select se deshabilita
+- Al quitar cobranza → estado vuelve a PENDIENTE y el select se habilita
 
 ---
 
-## Sistema de diseño (CSS variables)
+## Frontend React (cafedemo-frontend/)
 
-```css
-:root {
-  --bg:       #1a1208;   /* Fondo principal (café oscuro) */
-  --surface:  #2a1f0e;   /* Superficie de cards y sidebar */
-  --accent:   #c8862a;   /* Color principal (dorado café) */
-  --accent2:  #e4a84a;   /* Acento secundario */
-  --cream:    #f5e6c8;   /* Texto principal */
-  --muted:    #8a7355;   /* Texto secundario */
-  --green:    #6dbf8a;   /* Éxito / precios */
-  --red:      #e07070;   /* Error / peligro */
-  --blue:     #7aabcf;   /* Info / métodos de pago */
-}
 ```
+src/
+├── App.jsx              — rutas con react-router-dom v6
+├── main.jsx
+├── index.css            — tema café con variables CSS
+├── api/index.js         — axios con base URL localhost:8080/api
+├── context/AuthContext.jsx — sesión en localStorage
+├── components/
+│   ├── Layout.jsx
+│   ├── Sidebar.jsx
+│   └── ConfirmModal.jsx
+└── pages/
+    ├── Dashboard.jsx
+    ├── Clientes/Clientes.jsx
+    ├── Productos/Productos.jsx
+    ├── Facturas/Facturas.jsx    ← dropdown de clientes, sin paginación server-side aún
+    ├── Cobranzas/Cobranzas.jsx
+    └── Usuarios/ (Login.jsx + Usuarios.jsx)
+```
+
+**Nota:** el frontend React tiene paginación client-side (no server-side). Si se migra a server-side hay que actualizar igual que se hizo en el HTML.
 
 ---
 
-## Cómo agregar una nueva sección
+## application.properties (Raspberry Pi)
 
-1. **Agregar nav item** en el sidebar:
-```html
-<div class="nav-item" data-view="nueva"><span class="nav-icon">🆕</span> Nueva</div>
-```
-
-2. **Agregar la vista** en `.main`:
-```html
-<div class="view" id="view-nueva">...</div>
-```
-
-3. **Agregar el modal** con id `ov-nueva`
-
-4. **Agregar el endpoint** al map de eliminación:
-```javascript
-const endpointMap = { ..., nueva: '/nueva' };
-const reloadMap   = { ..., nueva: loadNueva };
-```
-
-5. **Implementar** las funciones `loadNueva()`, `renderNueva()`, `editNueva(id)`, `saveNueva()`
-
-6. **Registrar** en el switch de navegación dentro del event listener de `.nav-item`
-
----
-
-## Instalación y uso
-
-### Requisitos
-- Backend Spring Boot corriendo en `localhost:8080`
-- Los controllers deben tener `@CrossOrigin` habilitado (ya incluido en el proyecto)
-
-### Pasos
-```bash
-# Copiar el archivo al proyecto Spring Boot
-cp index.html src/main/resources/static/index.html
-
-# Iniciar el backend
-mvn spring-boot:run
-
-# Abrir en el navegador
-http://localhost:8080
+```properties
+spring.datasource.url=jdbc:h2:file:./cafedemo-data;DB_CLOSE_ON_EXIT=FALSE
+spring.jpa.hibernate.ddl-auto=update
+spring.sql.init.mode=always
+spring.sql.init.data-locations=classpath:data.sql
+spring.jpa.defer-datasource-initialization=true
+server.undertow.threads.io=2
+server.undertow.threads.worker=8
+spring.main.banner-mode=off
+spring.jmx.enabled=false
 ```
 
 ---
 
-## Notas importantes
+## data.sql
 
-- **Sin dependencias externas de JS** — no usa jQuery, React ni ningún framework
-- **Cache client-side** — los filtros de búsqueda operan sobre datos ya cargados, sin llamadas adicionales a la API
-- **Responsive básico** — el layout usa CSS Grid con `auto-fit`, funciona en pantallas medianas/grandes
-- **Sin paginación** — carga todos los registros de una vez; si el volumen de datos crece, considerar agregar paginación server-side
-- **Contraseñas en texto plano** — el backend maneja la autenticación; se recomienda agregar hashing en el backend si no lo tiene
+Usa `MERGE INTO ... KEY(id)` para evitar duplicados en reinicios. Tiene 30 registros por tabla distribuidos entre agosto 2025 y abril 2026 para que los gráficos del dashboard luzcan bien. Usuario admin: `usuario=admin`, `password=1234`.
+
+---
+
+## Funcionalidades pendientes (sugeridas pero no implementadas)
+
+- **Sistema de roles Admin/Operador** — el usuario tiene campo `rol` (ADMIN/OPERADOR). Se empezó a diseñar pero el usuario lo pausó. El Operador tendría acceso limitado según lo que se decida.
+- Reportes PDF de listado de facturas del mes y cobranzas del mes
+- Historial de facturas por cliente
+- Validación de stock en productos (campo `stock` en Producto)
+- Módulo de Caja diaria
+- Backup automático de H2 a Google Drive
+- Paginación server-side en el frontend React
+
+---
+
+## Errores conocidos y soluciones aplicadas
+
+| Error | Causa | Solución |
+|---|---|---|
+| `doLogin is not defined` | Backtick sin cerrar en el JS (número impar) | Limpiar restos de funciones viejas pegadas en loaders |
+| `Unexpected token 'catch'` | Restos del try/catch viejo en loadProductos/loadCobranzas | Limpiar líneas sobrantes post-transformación |
+| `cbs.reduce is not a function` | Dashboard recibía `Page<T>` en lugar de array | Extraer `.content` y usar `.totalElements` |
+| `searchProveedore not found` | `section.slice(0,-1)` da `proveedore` para `proveedores` | Reemplazar con mapa explícito `{proveedores:'searchProveedor'}` |
+| `ColorConstants.WHITE` type mismatch | `ColorConstants.WHITE` es `Color` no `DeviceRgb` | Reemplazar con `new DeviceRgb(255, 255, 255)` |
+| `setBackgroundColor(color, opacidad)` type mismatch | El segundo parámetro devuelve `Color` genérico | Usar color sólido sin opacidad |
+| Import path incorrecto en Dashboard.jsx | `../../api` desde `src/pages/` sube demasiado | Cambiar a `../api` |
