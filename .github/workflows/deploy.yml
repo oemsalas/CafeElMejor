@@ -63,14 +63,7 @@ jobs:
               -P ${{ secrets.RPI_PORT }} \
               target/cafeDemo-0.0.1-SNAPSHOT.jar \
               ${{ secrets.RPI_USER }}@${{ secrets.RPI_HOST }}:~/cafedemo/cafeDemo-0.0.1-SNAPSHOT.jar
-
-      - name: Copiar frontend vanilla
-        run: |
-          scp -i ~/.ssh/deploy_key \
-              -P ${{ secrets.RPI_PORT }} \
-              index.html \
-              ${{ secrets.RPI_USER }}@${{ secrets.RPI_HOST }}:/var/www/html/index.html
-
+      
       - name: Reiniciar servicio en la Raspberry
         run: |
           ssh -i ~/.ssh/deploy_key \
