@@ -1,5 +1,6 @@
 name: CI/CD — CaféDemo
-
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 on:
   push:
     branches: [ main ]
@@ -14,10 +15,10 @@ jobs:
 
     steps:
       - name: Checkout código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Configurar Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v4.7.0
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -28,7 +29,7 @@ jobs:
 
       # Guarda el JAR como artefacto para el siguiente job
       - name: Subir JAR como artefacto
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: cafedemo-jar
           path: target/cafeDemo-0.0.1-SNAPSHOT.jar
@@ -42,10 +43,10 @@ jobs:
 
     steps:
       - name: Checkout código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Descargar JAR del artefacto
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.3.0
         with:
           name: cafedemo-jar
           path: target/
@@ -64,6 +65,7 @@ jobs:
               target/cafeDemo-0.0.1-SNAPSHOT.jar \
               ${{ secrets.RPI_USER }}@${{ secrets.RPI_HOST }}:~/cafedemo/cafeDemo-0.0.1-SNAPSHOT.jar
       
+
       - name: Reiniciar servicio en la Raspberry
         run: |
           ssh -i ~/.ssh/deploy_key \
