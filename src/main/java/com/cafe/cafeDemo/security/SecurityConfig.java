@@ -35,6 +35,13 @@ public class SecurityConfig {
                 ).permitAll()
                 // H2 console — solo desarrollo, deshabilitar en producción
                 .requestMatchers("/h2-console/**").permitAll()
+                // Swagger
+                .requestMatchers(
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/v3/api-docs/**",
+                    "/v3/api-docs"
+                ).permitAll()
                 // Login público
                 .requestMatchers(HttpMethod.POST, "/api/usuarios/login").permitAll()
                 // Gestión de usuarios — solo ADMIN

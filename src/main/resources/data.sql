@@ -221,7 +221,7 @@ MERGE INTO usuario KEY(id) VALUES (
 -- Ejemplo de usuario OPERADOR (opcional, podés borrarlo)
 MERGE INTO usuario KEY(id) VALUES (
    2, 'Operador Demo'   
-   ,'$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'
+   ,'$2a$10$NH0i54pcsyc7Cxwl4EFV2OOCyv2UVH24zGMo.HC1Cj82B2nY/gi3G'
    ,'OPERADOR'
    ,'operador'
 );
