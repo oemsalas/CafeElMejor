@@ -202,5 +202,15 @@ MERGE INTO factura_producto (id_factura, id_producto) KEY(id_factura, id_product
 (30, 30),(30, 12);
 
 
-MERGE INTO usuario (id, nombre_apellido, usuario, password)
-KEY(id) VALUES (1, 'Administrador', 'admin', '1234');
+-- La contraseña hasheada corresponde a: 1234
+
+MERGE INTO usuario KEY(id) VALUES (
+  1, 'Administrador', '$2a$10$NH0i54pcsyc7Cxwl4EFV2OOCyv2UVH24zGMo.HC1Cj82B2nY/gi3G', 'admin'
+);
+
+ALTER TABLE CLIENTE      ALTER COLUMN ID RESTART WITH 100;
+ALTER TABLE PROVEEDOR    ALTER COLUMN ID RESTART WITH 100;
+ALTER TABLE PRODUCTO     ALTER COLUMN ID RESTART WITH 100;
+ALTER TABLE COBRANZA     ALTER COLUMN ID RESTART WITH 100;
+ALTER TABLE FACTURA      ALTER COLUMN ID_FACTURA RESTART WITH 100;
+ALTER TABLE USUARIO      ALTER COLUMN ID RESTART WITH 2;
