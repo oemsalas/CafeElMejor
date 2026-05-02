@@ -36,29 +36,28 @@ public class UsuarioController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Usuario body) {
-        System.out.println(">>> BUSCANDO: " + body.getUsuario());
         Usuario usuario = usuarioRepository.findByUsuario(body.getUsuario());
-        System.out.println(">>> ENCONTRADO: " + (usuario != null ? usuario.getUsuario() : "NULL"));
-        if (usuario != null) {
-            System.out.println(">>> PASSWORD BD: " + usuario.getPassword());
-            System.out.println(">>> MATCHES: " + passwordEncoder.matches(body.getPassword(), usuario.getPassword()));
-        }
         if (usuario == null || !passwordEncoder.matches(body.getPassword(), usuario.getPassword())) {
             return ResponseEntity.status(401).body(Map.of("error", "Usuario o contraseña incorrectos"));
         }
-        String token = jwtUtil.generateToken(usuario.getUsuario());
+        String token = jwtUtil.generateToken(usuario.getUsuario(), usuario.getRol());
         return ResponseEntity.ok(Map.of(
                 "token",          token,
                 "id",             usuario.getId(),
                 "nombreApellido", usuario.getNombreApellido(),
-                "usuario",        usuario.getUsuario()
+                "usuario",        usuario.getUsuario(),
+                "rol",            usuario.getRol() != null ? usuario.getRol() : "OPERADOR"
         ));
     }
 
     @PostMapping
     public Usuario addUsuario(@RequestBody Usuario nuevoUsuario) {
-        // Hashear la contraseña antes de guardar
+        // Hashear contraseña
         nuevoUsuario.setPassword(passwordEncoder.encode(nuevoUsuario.getPassword()));
+        // Rol OPERADOR por defecto si no se especifica
+        if (nuevoUsuario.getRol() == null || nuevoUsuario.getRol().isBlank()) {
+            nuevoUsuario.setRol("OPERADOR");
+        }
         return usuarioRepository.save(nuevoUsuario);
     }
 
@@ -76,9 +75,13 @@ public class UsuarioController {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id " + id));
         usuario.setNombreApellido(usuarioDetalles.getNombreApellido());
         usuario.setUsuario(usuarioDetalles.getUsuario());
-        // Solo re-hashear si mandaron una contraseña nueva
+        // Solo re-hashear si mandaron contraseña nueva
         if (usuarioDetalles.getPassword() != null && !usuarioDetalles.getPassword().isBlank()) {
             usuario.setPassword(passwordEncoder.encode(usuarioDetalles.getPassword()));
+        }
+        // Mantener rol existente si no se especifica uno nuevo
+        if (usuarioDetalles.getRol() != null && !usuarioDetalles.getRol().isBlank()) {
+            usuario.setRol(usuarioDetalles.getRol());
         }
         return ResponseEntity.ok(usuarioRepository.save(usuario));
     }

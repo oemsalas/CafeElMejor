@@ -539,13 +539,14 @@ window.addEventListener('DOMContentLoaded', () => {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const ahora   = Math.floor(Date.now() / 1000);
       if (payload.exp > ahora) {
-        session = { usuario: payload.sub };
+        session = { usuario: payload.sub, rol: payload.rol || 'OPERADOR' };
+        aplicarRol(session.rol);  // ← aplica restricciones al restaurar sesión
         document.getElementById('sessionName').textContent = payload.sub;
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('appShell').classList.add('show');
         loadDashboard();
       } else {
-        localStorage.removeItem('cafedemo_token'); // token expirado
+        localStorage.removeItem('cafedemo_token');
       }
     } catch {
       localStorage.removeItem('cafedemo_token');
@@ -553,33 +554,68 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Aplica las restricciones visuales según el rol del usuario
+function aplicarRol(rol) {
+  const esAdmin = rol === 'ADMIN';
+
+  // Mostrar u ocultar la sección Usuarios en el sidebar
+  const navUsuarios = document.querySelector('[data-view="usuarios"]');
+  if (navUsuarios) {
+    navUsuarios.style.display = esAdmin ? '' : 'none';
+  }
+
+  // Mostrar u ocultar la sección Admin completa en el sidebar
+  // (el texto "Admin" que agrupa el nav-item de Usuarios)
+  const navSections = document.querySelectorAll('.nav-section');
+  navSections.forEach(section => {
+    if (section.textContent.trim() === 'Admin') {
+      section.style.display = esAdmin ? '' : 'none';
+    }
+  });
+}
+
 // ══ AUTH ══
 async function doLogin() {
   const usuario  = document.getElementById('loginUser').value.trim();
   const password = document.getElementById('loginPass').value;
-  if (!usuario || !password) { document.getElementById('loginErr').textContent='Completá usuario y contraseña'; return; }
-  document.getElementById('loginErr').textContent='';
+  if (!usuario || !password) {
+    document.getElementById('loginErr').textContent = 'Completá usuario y contraseña';
+    return;
+  }
+  document.getElementById('loginErr').textContent = '';
   try {
-    const res = await fetch(`${API}/usuarios/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({usuario,password})});
+    const res = await fetch(`${API}/usuarios/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuario, password })
+    });
     if (!res.ok) throw new Error();
     const data = await res.json();
     if (!data || !data.token) throw new Error();
     session = data;
-    localStorage.setItem('cafedemo_token', data.token); // persiste al recargar
+    localStorage.setItem('cafedemo_token', data.token);
+    aplicarRol(data.rol);  // ← aplica restricciones según el rol
     document.getElementById('sessionName').textContent = data.nombreApellido || data.usuario;
-    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appShell').classList.add('show');
     loadDashboard();
-  } catch { document.getElementById('loginErr').textContent='Usuario o contraseña incorrectos'; }
+  } catch {
+    document.getElementById('loginErr').textContent = 'Usuario o contraseña incorrectos';
+  }
 }
 
 function doLogout() {
   session = null;
   localStorage.removeItem('cafedemo_token');
+  // Resetear restricciones visuales para la próxima sesión
+  const navUsuarios = document.querySelector('[data-view="usuarios"]');
+  if (navUsuarios) navUsuarios.style.display = '';
+  const navSections = document.querySelectorAll('.nav-section');
+  navSections.forEach(s => { if (s.textContent.trim() === 'Admin') s.style.display = ''; });
   document.getElementById('appShell').classList.remove('show');
-  document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('loginUser').value='';
-  document.getElementById('loginPass').value='';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
 }
 
 // ══ NAV ══

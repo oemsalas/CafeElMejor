@@ -12,7 +12,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -25,21 +24,22 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // ── Necesario para que H2 console renderice sus frames ──
             .headers(headers -> headers
                 .frameOptions(frame -> frame.sameOrigin())
             )
             .authorizeHttpRequests(auth -> auth
-                // Frontend estático
+                // Recursos estáticos y frontend
                 .requestMatchers(
                     "/", "/index.html", "/*.html", "/*.js",
                     "/*.css", "/*.ico", "/static/**", "/assets/**"
                 ).permitAll()
-                // Consola H2 — solo para desarrollo, sacar en producción
+                // H2 console — solo desarrollo, deshabilitar en producción
                 .requestMatchers("/h2-console/**").permitAll()
                 // Login público
                 .requestMatchers(HttpMethod.POST, "/api/usuarios/login").permitAll()
-                // Todo lo demás requiere token
+                // Gestión de usuarios — solo ADMIN
+                .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
+                // Todo lo demás requiere autenticación (ADMIN u OPERADOR)
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

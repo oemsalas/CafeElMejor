@@ -22,9 +22,10 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String usuario) {
+    public String generateToken(String usuario, String rol) {
         return Jwts.builder()
                 .subject(usuario)
+                .claim("rol", rol != null ? rol : "OPERADOR")
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getKey())
@@ -33,6 +34,10 @@ public class JwtUtil {
 
     public String extractUsuario(String token) {
         return getClaims(token).getSubject();
+    }
+
+    public String extractRol(String token) {
+        return getClaims(token).get("rol", String.class);
     }
 
     public boolean isTokenValid(String token) {

@@ -32,9 +32,13 @@ public class JwtFilter extends OncePerRequestFilter {
             String token = header.substring(7);
             if (jwtUtil.isTokenValid(token)) {
                 String usuario = jwtUtil.extractUsuario(token);
+                String rol     = jwtUtil.extractRol(token);
+                // Rol por defecto OPERADOR si no viene en el token
+                if (rol == null || rol.isBlank()) rol = "OPERADOR";
+
                 var auth = new UsernamePasswordAuthenticationToken(
                         usuario, null,
-                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                        List.of(new SimpleGrantedAuthority("ROLE_" + rol))
                 );
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
