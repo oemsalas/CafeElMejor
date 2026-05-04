@@ -18,7 +18,8 @@ public class Usuario {
     private String nombreApellido;
     private String usuario;
     private String password;
-
-    // ADMIN o OPERADOR — por defecto OPERADOR
     private String rol;
+
+    // Incrementa en cada login — invalida sesiones anteriores
+    private int tokenVersion = 0;
 }

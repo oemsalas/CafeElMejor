@@ -40,7 +40,17 @@ public class UsuarioController {
         if (usuario == null || !passwordEncoder.matches(body.getPassword(), usuario.getPassword())) {
             return ResponseEntity.status(401).body(Map.of("error", "Usuario o contraseña incorrectos"));
         }
-        String token = jwtUtil.generateToken(usuario.getUsuario(), usuario.getRol());
+
+        // Incrementar tokenVersion — invalida cualquier sesión anterior
+        usuario.setTokenVersion(usuario.getTokenVersion() + 1);
+        usuarioRepository.save(usuario);
+
+        String token = jwtUtil.generateToken(
+                usuario.getUsuario(),
+                usuario.getRol(),
+                usuario.getTokenVersion()
+        );
+
         return ResponseEntity.ok(Map.of(
                 "token",          token,
                 "id",             usuario.getId(),
@@ -52,12 +62,11 @@ public class UsuarioController {
 
     @PostMapping
     public Usuario addUsuario(@RequestBody Usuario nuevoUsuario) {
-        // Hashear contraseña
         nuevoUsuario.setPassword(passwordEncoder.encode(nuevoUsuario.getPassword()));
-        // Rol OPERADOR por defecto si no se especifica
         if (nuevoUsuario.getRol() == null || nuevoUsuario.getRol().isBlank()) {
             nuevoUsuario.setRol("OPERADOR");
         }
+        nuevoUsuario.setTokenVersion(0);
         return usuarioRepository.save(nuevoUsuario);
     }
 
@@ -75,11 +84,11 @@ public class UsuarioController {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id " + id));
         usuario.setNombreApellido(usuarioDetalles.getNombreApellido());
         usuario.setUsuario(usuarioDetalles.getUsuario());
-        // Solo re-hashear si mandaron contraseña nueva
         if (usuarioDetalles.getPassword() != null && !usuarioDetalles.getPassword().isBlank()) {
             usuario.setPassword(passwordEncoder.encode(usuarioDetalles.getPassword()));
+            // Cambio de contraseña también invalida sesiones activas
+            usuario.setTokenVersion(usuario.getTokenVersion() + 1);
         }
-        // Mantener rol existente si no se especifica uno nuevo
         if (usuarioDetalles.getRol() != null && !usuarioDetalles.getRol().isBlank()) {
             usuario.setRol(usuarioDetalles.getRol());
         }

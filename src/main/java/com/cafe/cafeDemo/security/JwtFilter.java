@@ -1,5 +1,7 @@
 package com.cafe.cafeDemo.security;
 
+import com.cafe.cafeDemo.model.Usuario;
+import com.cafe.cafeDemo.repository.UsuarioRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +22,9 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -30,14 +35,27 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
+
             if (jwtUtil.isTokenValid(token)) {
-                String usuario = jwtUtil.extractUsuario(token);
-                String rol     = jwtUtil.extractRol(token);
-                // Rol por defecto OPERADOR si no viene en el token
+                String usuarioNombre = jwtUtil.extractUsuario(token);
+                int versionToken     = jwtUtil.extractVersion(token);
+
+                // Verificar que la versión del token coincide con la BD
+                Usuario usuario = usuarioRepository.findByUsuario(usuarioNombre);
+
+                if (usuario == null || usuario.getTokenVersion() != versionToken) {
+                    // Sesión desplazada — otra notebook inició sesión después
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\":\"Sesión cerrada por inicio de sesión en otro dispositivo\"}");
+                    return;
+                }
+
+                String rol = jwtUtil.extractRol(token);
                 if (rol == null || rol.isBlank()) rol = "OPERADOR";
 
                 var auth = new UsernamePasswordAuthenticationToken(
-                        usuario, null,
+                        usuarioNombre, null,
                         List.of(new SimpleGrantedAuthority("ROLE_" + rol))
                 );
                 SecurityContextHolder.getContext().setAuthentication(auth);

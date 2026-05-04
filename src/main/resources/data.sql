@@ -202,29 +202,13 @@ MERGE INTO factura_producto (id_factura, id_producto) KEY(id_factura, id_product
 (30, 30),(30, 12);
 
 
--- La contraseña hasheada corresponde a: 1234
-
---MERGE INTO usuario KEY(id) VALUES (
---  1, 'Administrador'
---  , '$2a$10$NH0i54pcsyc7Cxwl4EFV2OOCyv2UVH24zGMo.HC1Cj82B2nY/gi3G'
---  , 'admin'
---);
-
--- Admin con rol ADMIN (reemplaza tu MERGE actual de usuario admin)
-MERGE INTO usuario KEY(id) VALUES (
-  1, 'Administrador'
-  ,'$2a$10$NH0i54pcsyc7Cxwl4EFV2OOCyv2UVH24zGMo.HC1Cj82B2nY/gi3G'  
-  ,'ADMIN'
-  ,'admin'
-);
-
--- Ejemplo de usuario OPERADOR (opcional, podés borrarlo)
-MERGE INTO usuario KEY(id) VALUES (
-   2, 'Operador Demo'   
-   ,'$2a$10$NH0i54pcsyc7Cxwl4EFV2OOCyv2UVH24zGMo.HC1Cj82B2nY/gi3G'
-   ,'OPERADOR'
-   ,'operador'
-);
+-- ── USUARIOS ──
+-- Contraseña hasheada corresponde a: 1234
+-- Campos: id, nombre_apellido, usuario, password, rol, token_version
+ 
+MERGE INTO usuario (id, nombre_apellido, usuario, password, rol, token_version) KEY(id) VALUES
+(1, 'Administrador', 'admin',    '$2a$10$NH0i54pcsyc7Cxwl4EFV2OOCyv2UVH24zGMo.HC1Cj82B2nY/gi3G', 'ADMIN',    0),
+(2, 'Operador Demo', 'operador', '$2a$10$NH0i54pcsyc7Cxwl4EFV2OOCyv2UVH24zGMo.HC1Cj82B2nY/gi3G', 'OPERADOR', 0);
 
 ALTER TABLE CLIENTE      ALTER COLUMN ID RESTART WITH 100;
 ALTER TABLE PROVEEDOR    ALTER COLUMN ID RESTART WITH 100;
